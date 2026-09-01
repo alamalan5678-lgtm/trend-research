@@ -13,23 +13,25 @@ const state = { query: '', platform: 'All', category: 'All', sort: 'score', view
 const $ = (id) => document.getElementById(id);
 
 function filteredTrends() {
-  return trends.filter(t => {
+  let list = trends.filter(t => {
     const text = [t.topic, t.title, t.category, t.audience, ...t.tags].join(' ').toLowerCase();
     return (!state.query || text.includes(state.query)) && (state.platform === 'All' || t.platform === state.platform) && (state.category === 'All' || t.category === state.category);
-  }).sort((a, b) => b[state.sort] - a[state.sort]);
+  });
+  if (state.view === 'saved') list = list.filter(t => state.saved.has(t.topic));
+  return list.sort((a, b) => b[state.sort] - a[state.sort]);
 }
 
 function render() {
   const rows = filteredTrends();
-  $('trendTable').innerHTML = rows.length ? rows.map(t => `
+  $('trendTable').innerHTML = rows.length ? rows.map((t, i) => `
     <article class="trend-row">
-      <div class="rank">${String(rows.indexOf(t) + 1).padStart(2, '0')}</div>
+      <div class="rank">${String(i + 1).padStart(2, '0')}</div>
       <div class="trend-main"><div class="topic">${t.topic}</div><strong>${t.title}</strong><div class="tags">${t.tags.slice(0,2).map(x => `<span>${x}</span>`).join('')}</div></div>
       <div class="platform"><span>${t.platform}</span><small>${t.category}</small></div>
       <div class="growth"><strong>+${t.growth}%</strong><small>growth</small></div>
       <div class="score"><strong>${t.score}</strong><small>score</small></div>
       <div class="trend-status ${t.status.toLowerCase()}"><i></i>${t.status}</div>
-      <button class="save-btn ${state.saved.has(t.topic) ? 'saved' : ''}" data-save="${t.topic}">${state.saved.has(t.topic) ? '★' : '☆'}</button>
+      <button class="save-btn ${state.saved.has(t.topic) ? 'saved' : ''}" data-save="${t.topic}" aria-label="Save trend">${state.saved.has(t.topic) ? '★' : '☆'}</button>
     </article>`).join('') : '<div class="empty">No signals match your filters.</div>';
   $('savedCount').textContent = state.saved.size;
   $('savedMetric').textContent = state.saved.size;
